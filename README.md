@@ -342,7 +342,7 @@ Generates dialect-agnostic SQL statements.
 The Secure Network Communication components provide a modular framework for encrypted data transmission over TCP sockets, integrating seamlessly with the Sane Data Commander ecosystem. These components reuse the `Distributor` class for configuration management, ensuring consistency with the UDC. The components are designed for client/server architectures, with encryption handled independently of the underlying socket connection.
 
 #### Components Overview
-- **Crypto**: Handles message cryptography using a configurable XOR-based encryption/decryption mechanism. Configurations (e.g., XOR byte) are managed via `Distributor`.
+- **Crypto**: Handles message cryptography using a configurable encryption/decryption config file based mechanism and routes encryption on the fly. Configurations are managed via `Distributor`.
 - **NetworkSocketConnector**: Establishes unencrypted TCP socket connections (client or server), configurable via `Distributor` for host, port, and role.
 - **SecureDataTransmitter**: Manages encrypted data transmission over sockets created by `NetworkSocketConnector`, using `Crypto` to encrypt data before sending and decrypt after receiving.
 
