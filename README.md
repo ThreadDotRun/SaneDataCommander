@@ -6,7 +6,7 @@ More dialects and databases are forthcoming in upcoming versions, so if you use 
 
 **TLDR**: Running `python Test_UDC.py` provides trivial usage examples from the top level and should produce output as shown below.
 
-![Data Commander Overview](assets/images/readme_image_1.png)
+![Data Commander Overview](./readme_image_1.png)
 
 ## Components
 
@@ -26,8 +26,8 @@ The Universal Database Connector (UDC) is a Python library that provides a datab
 
 1. Clone the Sane Data Commander repository:
    ```bash
-   git clone https://github.com/your-username/data-commander.git
-   cd data-commander
+   git clone https://github.com/ThreadDotRun/SaneDataCommander.git
+   cd SaneDataCommander
    ```
 
 2. Create a virtual environment (optional but recommended):
@@ -333,38 +333,172 @@ Generates dialect-agnostic SQL statements.
   - **Returns**: `Tuple[str, List[Any]]` - SQL `DELETE` statement and parameter values.
   - **Expected Data**: Example: `("DELETE FROM users WHERE name = ?", ["Alice"])`.
 
+### Secure Network Communication
+
+📢❗🚨 Coming soon!
+
+The Secure Network Communication components provide a modular framework for encrypted data transmission over TCP sockets, integrating seamlessly with the Sane Data Commander ecosystem. These components reuse the `Distributor` class for configuration management, ensuring consistency with the UDC. The components are designed for client/server architectures, with encryption handled independently of the underlying socket connection.
+
+#### Components Overview
+- **Crypto**: Handles message cryptography using a configurable XOR-based encryption/decryption mechanism. Configurations (e.g., XOR byte) are managed via `Distributor`.
+- **NetworkSocketConnector**: Establishes unencrypted TCP socket connections (client or server), configurable via `Distributor` for host, port, and role.
+- **SecureDataTransmitter**: Manages encrypted data transmission over sockets created by `NetworkSocketConnector`, using `Crypto` to encrypt data before sending and decrypt after receiving.
+
+#### Features
+- **Configurable Cryptography**: Uses `Distributor` to manage encryption settings, currently supporting XOR-based encryption with a configurable byte.
+- **Flexible Socket Connections**: Supports both client and server roles with configurable connection parameters (host, port).
+- **Encrypted Data Transmission**: Ensures all data sent or received is encrypted, independent of the socket’s transport layer.
+- **Thread-Safe Operations**: Leverages thread-safe configuration management via `Distributor`.
+- **Comprehensive Logging**: Detailed logs for debugging and monitoring network and crypto operations.
+
+#### Installation
+
+1. Ensure the Sane Data Commander repository is cloned and dependencies are installed (see UDC Installation).
+2. No additional dependencies are required for the Secure Network Communication components, as they use Python’s standard library (`socket`, `threading`).
+
+#### Usage
+
+The components are configured via a CSV file managed by `Distributor`. Below is an example of setting up a server and client for encrypted communication:
+
+1. Create a configuration CSV file (`network_configs.csv`):
+   ```csv
+   service_type,service_name,version,settings
+   network,server,1.0,"{""role"": ""server"", ""host"": ""localhost"", ""port"": 5000, ""crypto"": {""type"": ""xor"", ""byte"": 42}}"
+   network,client,1.0,"{""role"": ""client"", ""host"": ""localhost"", ""port"": 5000, ""crypto"": {""type"": ""xor"", ""byte"": 42}}"
+   ```
+
+2. Run a server script (e.g., `server.py`):
+   ```python
+   from Distributor import Distributor
+   from Crypto import Crypto
+   from NetworkSocketConnector import NetworkSocketConnector
+   from SecureDataTransmitter import SecureDataTransmitter
+
+   distributor = Distributor(db_path="network_configs.db")
+   distributor.load_configs("network_configs.csv")
+   crypto = Crypto(distributor, service_name="server", version="1.0")
+   connector = NetworkSocketConnector(distributor, service_name="server", version="1.0")
+   transmitter = SecureDataTransmitter(connector, crypto)
+
+   socket = connector.connect()
+   transmitter.start_server(socket)
+   ```
+
+3. Run a client script (e.g., `client.py`):
+   ```python
+   from Distributor import Distributor
+   from Crypto import Crypto
+   from NetworkSocketConnector import NetworkSocketConnector
+   from SecureDataTransmitter import SecureDataTransmitter
+
+   distributor = Distributor(db_path="network_configs.db")
+   distributor.load_configs("network_configs.csv")
+   crypto = Crypto(distributor, service_name="client", version="1.0")
+   connector = NetworkSocketConnector(distributor, service_name="client", version="1.0")
+   transmitter = SecureDataTransmitter(connector, crypto)
+
+   socket = connector.connect()
+   response = transmitter.send_data(socket, "Hello, Server!".encode())
+   print(f"Received: {response.decode()}")
+   socket.close()
+   ```
+
+   This will:
+   - Load configurations from `network_configs.csv`.
+   - Establish a server or client socket connection.
+   - Send/receive encrypted data using XOR encryption (byte 42).
+   - Log all operations.
+
+#### API Documentation
+
+##### Class: `Crypto`
+Handles message cryptography with configurable XOR-based encryption.
+
+- **`__init__(distributor: Distributor, service_name: str, version: str = "1.0") -> None`**
+  - **Parameters**:
+    - `distributor: Distributor` - Instance of the `Distributor` class for configuration management.
+    - `service_name: str` - Name of the network service (e.g., `"server"`, `"client"`).
+    - `version: str` - Configuration version (default: `"1.0"`).
+  - **Returns**: None
+  - **Expected Data**: Loads crypto configuration (e.g., XOR byte) from `Distributor`. Raises `ValueError` if configuration is invalid.
+
+- **`encrypt(data: bytes) -> bytes`**
+  - **Parameters**:
+    - `data: bytes` - Data to encrypt.
+  - **Returns**: `bytes` - Encrypted data using XOR with the configured byte.
+  - **Expected Data**: Applies XOR encryption. Example: `b"Hello" ^ 42` yields encrypted bytes.
+
+- **`decrypt(data: bytes) -> bytes`**
+  - **Parameters**:
+    - `data: bytes` - Data to decrypt.
+  - **Returns**: `bytes` - Decrypted data using XOR with the configured byte.
+  - **Expected Data**: Reverses XOR encryption. Example: `(encrypted bytes) ^ 42` yields original `b"Hello"`.
+
+##### Class: `NetworkSocketConnector`
+Establishes unencrypted TCP socket connections.
+
+- **`__init__(distributor: Distributor, service_name: str, version: str = "1.0") -> None`**
+  - **Parameters**:
+    - `distributor: Distributor` - Instance of the `Distributor` class for configuration management.
+    - `service_name: str` - Name of the network service (e.g., `"server"`, `"client"`).
+    - `version: str` - Configuration version (default: `"1.0"`).
+  - **Returns**: None
+  - **Expected Data**: Loads socket configuration (e.g., role, host, port) from `Distributor`. Raises `ValueError` if configuration is invalid.
+
+- **`connect() -> socket.socket`**
+  - **Parameters**: None
+  - **Returns**: `socket.socket` - A connected TCP socket (server returns a client socket after accepting a connection).
+  - **Expected Data**: For servers, binds and listens; for clients, connects to the specified host/port. Raises `socket.error` on failure.
+
+##### Class: `SecureDataTransmitter`
+Manages encrypted data transmission over sockets.
+
+- **`__init__(connector: NetworkSocketConnector, crypto: Crypto) -> None`**
+  - **Parameters**:
+    - `connector: NetworkSocketConnector` - Instance of the socket connector.
+    - `crypto: Crypto` - Instance of the crypto handler.
+  - **Returns**: None
+  - **Expected Data**: Initializes with references to connector and crypto instances.
+
+- **`send_data(socket: socket.socket, data: bytes) -> bytes`**
+  - **Parameters**:
+    - `socket: socket.socket` - Connected socket to send data over.
+    - `data: bytes` - Data to encrypt and send.
+  - **Returns**: `bytes` - Decrypted response from the peer (empty for servers).
+  - **Expected Data**: Encrypts data, sends it, and returns decrypted response (for clients). Example: Client sends `b"Hello"`, receives `b"Hi!"`.
+
+- **`start_server(socket: socket.socket) -> None`**
+  - **Parameters**:
+    - `socket: socket.socket` - Server socket to accept connections.
+  - **Returns**: None
+  - **Expected Data**: Listens for client connections, receives encrypted data, decrypts, processes (e.g., echoes), and sends encrypted response. Runs until interrupted.
+
 #### Testing
 
-To verify the functionality of the UDC component, you can run one of the provided test scripts:
-- `Test_UDC.py`: Tests the core functionality of the Universal Database Connector, including connection pooling and configuration management.
-- `Test_UDO.py`: Tests the database operations (e.g., CRUD operations) provided by the `DatabaseOperations` class.
+To verify the functionality of the Secure Network Communication components, you can create test scripts similar to the UDC tests:
+- `Test_Crypto.py`: Tests encryption/decryption consistency using `Crypto`.
+- `Test_Network.py`: Tests client/server communication using `NetworkSocketConnector` and `SecureDataTransmitter`.
 
-Run the tests using the following commands:
+Example test command:
 ```bash
-python Test_UDC.py
-```
-or
-```bash
-python Test_UDO.py
+python Test_Crypto.py
 ```
 
-Ensure the required dependencies are installed and a `configs.csv` file is present in the project directory before running the tests.
+Ensure `network_configs.csv` is present and dependencies are installed.
 
 #### Dependencies
 - Python >= 3.8
-- pymysql >= 1.0.2 (for MySQL)
-- sqlite3 (included with Python)
+- No additional dependencies (uses `socket`, `threading` from the standard library).
 
-#### Project Structure (UDC Component)
+#### Project Structure (Secure Network Communication)
 ```
-data-commander/
-├── Test_UDC.py               # Test script demonstrating UDC usage
-├── Test_UDO.py               # Test script for Database Operations
-├── Distributor.py            # Manages configuration storage and retrieval
-├── UniversalDatabaseConnector.py  # Connection pooling and universal connector
-├── DatabaseOperations.py     # Database operations and SQL generation
-├── configs.csv               # Sample configuration file
-├── requirements.txt          # Project dependencies
+SaneDataCommander/
+├── Crypto.py                 # Handles message cryptography
+├── NetworkSocketConnector.py # Establishes TCP socket connections
+├── SecureDataTransmitter.py  # Manages encrypted data transmission
+├── network_configs.csv       # Sample configuration file
+├── Test_Crypto.py            # Test script for Crypto
+├── Test_Network.py           # Test script for network components
 └── ...
 ```
 
@@ -376,10 +510,10 @@ Contributions to Sane Data Commander and its components are welcome! To contribu
 4. Push to the branch (`git push origin feature-branch`).
 5. Open a Pull Request.
 
-### Please ensure your contributions are sane and related to the forwarding the concept of abstraction of services across platforms
+Please ensure your contributions are sane and related to forwarding the concept of abstraction of services across platforms.
 
 ## License
 This project is licensed under the Apache License 2.0. See the [LICENSE](LICENSE) file for details.
 
 ## Contact
-For questions or issues, please open an issue on GitHub or contact me using Github's project forums
+For questions or issues, please open an issue on GitHub or contact me using GitHub's project forums.
