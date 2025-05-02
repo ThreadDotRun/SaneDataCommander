@@ -6,7 +6,7 @@ More dialects and databases are forthcoming in upcoming versions, so if you use 
 
 **TLDR**: Running `python Test_UDC.py` provides trivial usage examples from the top level and should produce output as shown below.
 
-![Data Commander Overview](Assets/Images/readme_image_1.png)
+![Data Commander Overview](assets/images/readme_image_1.png)
 
 ## Components
 
