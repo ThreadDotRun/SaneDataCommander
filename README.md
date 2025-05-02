@@ -6,11 +6,11 @@ More dialects and databases are forthcoming in upcoming versions, so if you use 
 
 **TLDR**: Running `python Test_UDC.py` provides trivial usage examples from the top level and should produce output as shown below.
 
-![Data Commander Overview](./assets/images/readme_image_1.png)
-
 ## Components
 
 ### Universal Database Connector (UDC)
+
+![Data Commander Overview](./assets/images/readme_image_1.png)
 
 The Universal Database Connector (UDC) is a Python library that provides a database-agnostic layer for Sane Data Commander, enabling seamless integration with multiple database systems (currently SQLite and MySQL, with more to come). It supports connection pooling, dialect-agnostic SQL generation, and configuration management, making it ideal for plugging into application frameworks requiring robust database operations.
 
@@ -335,7 +335,9 @@ Generates dialect-agnostic SQL statements.
 
 ### Secure Network Communication
 
-📢❗🚨 Coming soon!
+📢❗🚨 New!
+
+![Network Commander Overview](./assets/images/readme_image_2.png)
 
 The Secure Network Communication components provide a modular framework for encrypted data transmission over TCP sockets, integrating seamlessly with the Sane Data Commander ecosystem. These components reuse the `Distributor` class for configuration management, ensuring consistency with the UDC. The components are designed for client/server architectures, with encryption handled independently of the underlying socket connection.
 
