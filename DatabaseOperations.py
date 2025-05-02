@@ -1,7 +1,7 @@
 import logging
 from typing import List, Dict, Any, Optional, Union
-from typing import Tuple, Dict, Any
-# Configure logging
+from typing import Tuple
+
 logging.basicConfig(
     level=logging.DEBUG,
     format='%(asctime)s - %(levelname)s - %(threadName)s - %(message)s'
@@ -9,8 +9,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 class SQLMaker:
-    """
-    A class to generate SQL statements for various database operations in a dialect-agnostic way.
+    """A class to generate SQL statements for various database operations in a dialect-agnostic way.
     
     Args:
         dialect: The database dialect (e.g., 'mysql', 'postgresql', 'sqlite'). Defaults to 'generic'.
@@ -168,8 +167,7 @@ class SQLMaker:
 
 class DatabaseOperations:
     def __init__(self, connector, service_name: str, version: str = "1.0", dialect: str = "generic"):
-        """
-        Initialize with a UniversalDatabaseConnector instance and SQLMaker dialect.
+        """Initialize with a UniversalDatabaseConnector instance and SQLMaker dialect.
         
         Args:
             connector: UniversalDatabaseConnector instance
@@ -193,8 +191,7 @@ class DatabaseOperations:
     def create_table(self, table_name: str, columns: Dict[str, str], 
                     primary_key: Optional[Union[str, List[str]]] = None,
                     if_not_exists: bool = True) -> bool:
-        """
-        Create a new table using SQLMaker.
+        """Create a new table using SQLMaker.
         
         Args:
             table_name: Name of the table to create
@@ -218,8 +215,7 @@ class DatabaseOperations:
             return False
 
     def drop_table(self, table_name: str, if_exists: bool = True) -> bool:
-        """
-        Drop a table using SQLMaker.
+        """Drop a table using SQLMaker.
         
         Args:
             table_name: Name of the table to drop
@@ -242,8 +238,7 @@ class DatabaseOperations:
 
     def create_index(self, index_name: str, table_name: str, 
                     columns: Union[str, List[str]], unique: bool = False) -> bool:
-        """
-        Create an index on a table using SQLMaker.
+        """Create an index on a table using SQLMaker.
         
         Args:
             index_name: Name of the index to create
@@ -267,8 +262,7 @@ class DatabaseOperations:
             return False
 
     def insert(self, table_name: str, data: Dict[str, Any]) -> bool:
-        """
-        Insert a single row into a table using SQLMaker.
+        """Insert a single row into a table using SQLMaker.
         
         Args:
             table_name: Name of the table to insert into
@@ -280,8 +274,7 @@ class DatabaseOperations:
         return self.bulk_insert(table_name, [data])
 
     def bulk_insert(self, table_name: str, data: List[Dict[str, Any]]) -> bool:
-        """
-        Insert multiple rows into a table using SQLMaker.
+        """Insert multiple rows into a table using SQLMaker.
         
         Args:
             table_name: Name of the table to insert into
@@ -295,11 +288,10 @@ class DatabaseOperations:
                 return False
         
         if not data:
-            return True  # Nothing to insert
-            
+            return True
+        
         try:
             sql, values = self.sql_maker.bulk_insert(table_name, data)
-            # Execute for each row (could be optimized for some databases)
             for value_tuple in values:
                 result = self.connector.execute_query(sql, value_tuple)
                 if result is None:
@@ -313,8 +305,7 @@ class DatabaseOperations:
               where: Optional[Dict[str, Any]] = None,
               order_by: Optional[Union[str, List[str]]] = None,
               limit: Optional[int] = None) -> Optional[List[Dict[str, Any]]]:
-        """
-        Select rows from a table using SQLMaker.
+        """Select rows from a table using SQLMaker.
         
         Args:
             table_name: Name of the table to select from
@@ -335,8 +326,6 @@ class DatabaseOperations:
             result = self.connector.execute_query(sql, params)
             if result is None:
                 return None
-                
-            # Convert to list of dictionaries
             col_list = ["*"] if columns == "*" else ([columns] if isinstance(columns, str) else columns)
             return [dict(zip(col_list, row)) for row in result]
         except Exception as e:
@@ -345,8 +334,7 @@ class DatabaseOperations:
 
     def update(self, table_name: str, data: Dict[str, Any],
               where: Optional[Dict[str, Any]] = None) -> bool:
-        """
-        Update rows in a table using SQLMaker.
+        """Update rows in a table using SQLMaker.
         
         Args:
             table_name: Name of the table to update
@@ -369,8 +357,7 @@ class DatabaseOperations:
             return False
 
     def delete(self, table_name: str, where: Optional[Dict[str, Any]] = None) -> bool:
-        """
-        Delete rows from a table using SQLMaker.
+        """Delete rows from a table using SQLMaker.
         
         Args:
             table_name: Name of the table to delete from
