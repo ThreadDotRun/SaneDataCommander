@@ -16,6 +16,10 @@ logger = logging.getLogger(__name__)
 
 from Distributor import Distributor
 
+import psycopg2  # For PostgreSQL
+import pyodbc    # For SQL Server
+import pymssql   # Alternative for SQL Server (optional)
+
 class DBConnectionPool:
     def __init__(self, max_connections=10):
         self.max_connections = max_connections
@@ -40,76 +44,65 @@ class DBConnectionPool:
     def _create_connection(self):
         """Create a new connection based on driver."""
         settings = self.config["settings"]
-        if self.driver == "sqlite3":
-            conn = sqlite3.connect(settings["db_path"], check_same_thread=False, timeout=5)
-            conn.execute("PRAGMA journal_mode=WAL")  # Enable Write-Ahead Logging
-            return conn
-        elif self.driver == "pymysql":
-            return pymysql.connect(
-                host=settings["host"],
-                port=settings["port"],
-                user=settings["user"],
-                password=settings["password"],
-                database=settings["database"]
-            )
-        else:
-            raise ValueError(f"Unsupported driver: {self.driver}")
-
-    def get_connection(self):
-        """Get a connection from the pool, creating a new one if necessary."""
-        logger.debug("Getting connection, pool size: %d", self.pool.qsize())
-        with self.lock:
-            if self.pool.empty() and self.pool.qsize() < self.max_connections:
-                logger.debug("Creating new connection")
-                conn = self._create_connection()
+        try:
+            if self.driver == "sqlite3":
+                conn = sqlite3.connect(settings["db_path"], check_same_thread=False, timeout=5)
+                conn.execute("PRAGMA journal_mode=WAL")  # Enable Write-Ahead Logging
                 return conn
-        try:
-            conn = self.pool.get(timeout=5)
-            logger.debug("Retrieved connection from pool")
-            return conn
-        except Queue.Empty:
-            logger.error("Connection pool empty after timeout")
-            raise RuntimeError("No available connections")
-
-    def release_connection(self, conn):
-        """Return a connection to the pool."""
-        logger.debug("Releasing connection, pool size: %d", self.pool.qsize())
-        try:
-            with self.lock:
-                if self.pool.qsize() < self.max_connections:
-                    self.pool.put(conn, timeout=10)  # Increased timeout
-                    logger.debug("Connection returned to pool")
-                else:
-                    logger.warning("Connection pool full, not returning connection")
-        except Queue.Full as e:
-            logger.error("Failed to return connection to pool, queue full: %s", e)
-            # Do not close the connection to preserve thread-local reference
+            elif self.driver == "pymysql":
+                return pymysql.connect(
+                    host=settings["host"],
+                    port=settings.get("port", 3306),
+                    user=settings["user"],
+                    password=settings["password"],
+                    database=settings["database"],
+                    charset="utf8mb4"
+                )
+            elif self.driver == "psycopg2":
+                return psycopg2.connect(
+                    host=settings["host"],
+                    port=settings.get("port", 5432),
+                    user=settings["user"],
+                    password=settings["password"],
+                    database=settings["database"]
+                )
+            elif self.driver == "pyodbc":
+                # Example connection string for SQL Server
+                conn_str = (
+                    f"DRIVER={{ODBC Driver 17 for SQL Server}};"
+                    f"SERVER={settings['host']};"
+                    f"PORT={settings.get('port', 1433)};"
+                    f"DATABASE={settings['database']};"
+                    f"UID={settings['user']};"
+                    f"PWD={settings['password']}"
+                )
+                return pyodbc.connect(conn_str)
+            elif self.driver == "pymssql":
+                return pymssql.connect(
+                    server=settings["host"],
+                    port=settings.get("port", 1433),
+                    user=settings["user"],
+                    password=settings["password"],
+                    database=settings["database"]
+                )
+            else:
+                raise ValueError(f"Unsupported driver: {self.driver}")
         except Exception as e:
-            logger.error("Unexpected error releasing connection: %s", e)
-            # Do not close the connection to preserve thread-local reference
+            logger.error("Failed to create connection for driver %s: %s", self.driver, e)
+            raise
 
 class UniversalDatabaseConnector:
     def __init__(self, db_path="my_configs.db"):
-        """Initialize with a Distributor and thread-local storage."""
         self.distributor = Distributor(db_path=db_path)
         self.thread_local = threading.local()
-        self.connection_pools = {}  # Dictionary to store connection pools by service_name:version
-        self.lock = threading.Lock()  # Lock for pool initialization
+        self.connection_pools = {}
+        self.lock = threading.Lock()
         logger.debug("Initialized UniversalDatabaseConnector with db_path=%s", db_path)
-
-    def load_configs(self, csv_path):
-        """Load configurations from a CSV file (assumed thread-safe in Distributor)."""
-        result = self.distributor.getConfigsFromDelimtedFile(csv_path)
-        if result:
-            self.distributor.storeConfigsInSQLite()
-            logger.debug("Loaded and stored configs from %s", csv_path)
-        return result
 
     def connect(self, service_name, version="1.0"):
         """Connect to a database using a connection pool."""
         try:
             pool_key = f"{service_name}:{version}"
-            # Initialize connection pool if not already created
             with self.lock:
                 if pool_key not in self.connection_pools:
                     config_json = self.distributor.GetConfigureation("database", service_name, version)
@@ -121,75 +114,31 @@ class UniversalDatabaseConnector:
                     settings = config["settings"]
                     driver = settings.get("driver")
 
-                    if driver not in ["sqlite3", "pymysql"]:
+                    # Validate supported drivers
+                    supported_drivers = ["sqlite3", "pymysql", "psycopg2", "pyodbc", "pymssql"]
+                    if driver not in supported_drivers:
                         logger.error("Unsupported driver: %s", driver)
                         return False
 
-                    # Optimize max_connections for SQLite
+                    # Optimize max_connections based on driver
                     max_connections = 2 if driver == "sqlite3" else 10
                     pool = DBConnectionPool(max_connections=max_connections)
                     pool.initialize_pool(config, driver)
                     self.connection_pools[pool_key] = pool
-                    logger.debug("Created connection pool for %s:%s with max_connections=%d", service_name, version, max_connections)
+                    logger.debug("Created connection pool for %s:%s with max_connections=%d", 
+                                 service_name, version, max_connections)
 
-            # Get a connection for the current thread if not already assigned
+            # Assign connection to thread-local storage
             if not hasattr(self.thread_local, pool_key):
                 pool = self.connection_pools[pool_key]
                 conn = pool.get_connection()
                 setattr(self.thread_local, pool_key, conn)
                 logger.debug("Assigned connection to thread for %s:%s", service_name, version)
             return True
-        except (sqlite3.Error, pymysql.Error, KeyError, json.JSONDecodeError, ValueError) as e:
+        except (sqlite3.Error, pymysql.Error, psycopg2.Error, pyodbc.Error, pymssql.Error, KeyError, json.JSONDecodeError, ValueError) as e:
             logger.error("Connection failed: %s", e)
             return False
-
-    def execute_query(self, query: str, params: Optional[Union[Tuple, List]] = None) -> Optional[Any]:
-        """Execute a query on the thread-local connection with optional parameters."""
-        for pool_key in self.connection_pools:
-            conn = getattr(self.thread_local, pool_key, None)
-            if conn:
-                try:
-                    cursor = conn.cursor()
-                    if params:
-                        cursor.execute(query, params)
-                    else:
-                        cursor.execute(query)
-                    # Only fetch results for SELECT queries
-                    if query.strip().upper().startswith("SELECT"):
-                        results = cursor.fetchall()
-                    else:
-                        results = True  # Indicate success for non-SELECT queries
-                    conn.commit()
-                    logger.debug("Executed query: %s, params: %s, results: %s", query, params, results)
-                    return results
-                except (sqlite3.Error, pymysql.Error) as e:
-                    logger.error("Query failed: %s", e)
-                    conn.rollback()
-                    return None
-                finally:
-                    # Return connection to pool but keep it in thread_local
-                    self.connection_pools[pool_key].release_connection(conn)
-            else:
-                logger.error("No active connection for thread")
-                return None
-        logger.error("No active connection for thread")
-        return None
-
-    def close(self):
-        """Close all connection pools and thread-local connections."""
-        with self.lock:
-            for pool_key, pool in self.connection_pools.items():
-                while not pool.pool.empty():
-                    conn = pool.pool.get()
-                    conn.close()
-                logger.debug("Closed connection pool for %s", pool_key)
-            self.connection_pools.clear()
-
-            # Clear thread-local connections
-            for attr in list(self.thread_local.__dict__.keys()):
-                delattr(self.thread_local, attr)
-            logger.debug("Cleared all thread-local connections")
-
+                
 class DatabaseOperations:
     def __init__(self, connector, service_name: str, version: str = "1.0"):
         """
