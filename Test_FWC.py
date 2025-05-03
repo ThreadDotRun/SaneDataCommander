@@ -1,45 +1,63 @@
 from FrameworkController import FrameworkController
-import threading
-import time
 
-# Create a sample configuration CSV
-config_content = """service_type,service_name,version,settings
-database,test_db,1.0,{"driver": "sqlite3", "db_path": "test.db"}
-network,server,1.0,{"role": "server", "host": "localhost", "port": 5000, "crypto": {"type": "xor", "params": {"byte": 42}}}
-network,client,1.0,{"role": "client", "host": "localhost", "port": 5000, "crypto": {"type": "xor", "params": {"byte": 42}}}
-gui,web_interface,1.0,{"host": "localhost", "port": 8000, "template": "default_template.html", "actions": {"button1": "click", "textbox1": "uppercase"}}
-"""
+def main():
+    # Initialize the controller
+    controller = FrameworkController()
 
-with open("configs.csv", "w", encoding="utf-8", newline="") as f:
-    f.write(config_content)
-print("Created configs.csv")
+    # Load configurations
+    if not controller.load_configs():
+        print("Failed to load configurations")
+        return
 
-# Initialize the controller
-controller = FrameworkController(config_db_path="configs.db", config_file="configs.csv")
-if not controller.initialize():
-    print("Initialization failed")
-    exit(1)
+    # Initialize database
+    if not controller.initialize_database():
+        print("Failed to initialize database")
+        return
 
-# Database operations
-controller.create_table("users", {"id": "INTEGER", "name": "TEXT"}, primary_key="id")
-controller.insert_data("users", {"name": "Alice"})
-results = controller.select_data("users", columns=["id", "name"], where={"name": "Alice"})
-print("Selected data:", results)
-controller.update_data("users", {"name": "Bob"}, where={"name": "Alice"})
-controller.delete_data("users", where={"name": "Bob"})
+    # Create a table
+    columns = {"id": "INTEGER PRIMARY KEY AUTOINCREMENT", "name": "TEXT"}
+    if controller.create_table("users", columns, primary_key="id"):
+        print("Created table 'users'")
 
-# Start network server in a separate thread
-network_thread = threading.Thread(target=controller.start_network_server, daemon=True)
-network_thread.start()
-time.sleep(1)  # Allow server to start
+    # Insert data
+    if controller.insert_data("users", {"name": "Alice"}):
+        print("Inserted data: Alice")
 
-# Send network data
-response = controller.send_network_data(b"Hello, Server!")
-print("Network response:", response.decode() if response else "No response")
+    # Select data
+    result = controller.select_data("users", columns=["id", "name"], where={"name": "Alice"})
+    if result:
+        print(f"Selected data: {result}")
 
-# Start GUI server
-controller.start_gui_server()
+    # Initialize network
+    if not controller.initialize_network():
+        print("Failed to initialize network")
+        return
 
-# Note: GUI server runs indefinitely; use Ctrl+C to stop
-# Cleanup
-controller.shutdown()
+    # Start network server
+    if controller.start_network_server():
+        print("Started network server")
+
+    # Send network data
+    response = controller.send_network_data(b"Hello, Server!")
+    if response:
+        print(f"Network response: {response.decode()}")
+
+    # Initialize GUI
+    if not controller.initialize_gui():
+        print("Failed to initialize GUI")
+        return
+
+    # Start GUI server
+    if controller.start_gui_server():
+        print("Started GUI server at http://localhost:8000")
+
+    # Keep the main thread alive to allow server threads to run
+    try:
+        while True:
+            pass
+    except KeyboardInterrupt:
+        controller.shutdown()
+        print("Shutdown complete")
+
+if __name__ == "__main__":
+    main()

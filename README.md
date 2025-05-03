@@ -6,7 +6,7 @@ This provides for platform and service agnostic HTML applications served over HT
 
 More features, dialects, and integrations are forthcoming in upcoming versions, so stay tuned for updates! 📢
 
-**TLDR**: Running `python Test_UDC.py`, `python Test_Network.py`, and `python Test_UDO.py` provides trivial usage examples for the database and network. Run `python RunGUIServer.py` to launch the GUI web interface and show trivial configurations from the csv config files.
+**TLDR**: Running `python Test_UDC.py`, `python Test_Network.py`, `python Test_UDO.py`, or `python Test_FWC.py` provides trivial usage examples for the database, network, and controller components. Run `python RunGUIServer.py` to launch the GUI web interface and show trivial configurations from the csv config files.
 
 ## Components
 
@@ -48,6 +48,8 @@ The Universal Database Connector (UDC) is a Python library that provides a datab
    pymysql>=1.0.2
    ```
 
+   `python --version` 3.10.12 or better
+
 4. (Optional) Install database drivers:
    - For MySQL: Ensure a MySQL server is running.
    - For SQLite: No additional drivers needed (included with Python).
@@ -59,7 +61,7 @@ The `Test_UDC.py` script demonstrates how to use the UDC component to perform CR
 1. Create a configuration CSV file (`configs.csv`):
    ```csv
    service_type,service_name,version,settings
-   database,test_db,1.0,"{\"driver\": \"sqlite3\", \"db_path\": \"test.db\"}"
+   database,test_db,1.0,"{""driver"": ""sqlite3"", ""db_path"": ""test.db""}"
    ```
 
 2. Run the test script:
@@ -133,8 +135,8 @@ The components are configured via a CSV file managed by `Distributor`. Below is 
 1. Create a configuration CSV file (`network_configs.csv`):
    ```csv
    service_type,service_name,version,settings
-   network,server,1.0,"{\"role\": \"server\", \"host\": \"localhost\", \"port\": 5000, \"crypto\": {\"type\": \"xor\", \"params\": {\"byte\": 42}}}"
-   network,client,1.0,"{\"role\": \"client\", \"host\": \"localhost\", \"port\": 5000, \"crypto\": {\"type\": \"xor\", \"params\": {\"byte\": 42}}}"
+   network,server,1.0,"{""role"": ""server"", ""host"": ""localhost"", ""port"": 5000, ""crypto"": {""type"": ""xor"", ""params"": {""byte"": 42}}}"
+   network,client,1.0,"{""role"": ""client"", ""host"": ""localhost"", ""port"": 5000, ""crypto"": {""type"": ""xor"", ""params"": {""byte"": 42}}}"
    ```
 
 2. Run a server script (e.g., `server.py`):
@@ -243,7 +245,7 @@ The GUI Server is configured via `configs.csv` and `gui_action_configs.txt`. Bel
 1. Create a configuration CSV file (`configs.csv`):
    ```csv
    service_type,service_name,version,settings
-   gui,web_interface,1.0,"{\"host\": \"localhost\", \"port\": 8000, \"template\": \"default_template.html\", \"actions\": {\"button1\": \"click\", \"textbox1\": \"uppercase\"}}"
+   gui,web_interface,1.0,"{""host"": ""localhost"", ""port"": 8000, ""template"": ""default_template.html"", ""actions"": {""button1"": ""click"", ""textbox1"": ""uppercase""}}"
    ```
 
 2. Create an action configuration file (`gui_action_configs.txt`):
@@ -304,6 +306,138 @@ SaneDataCommander/
 └── ...
 ```
 
+### Framework Controller
+
+📢❗🚨 New!
+
+![Framework Controller Overview](./assets/images/readme_image_4.png)
+
+The Framework Controller is the central orchestrator of the Sane Data Commander ecosystem, providing a high-level interface to manage database operations, secure network communication, and web-based GUI services. It integrates all major components (UDC, Secure Network Communication, GUI Server) using the `Distributor` for configuration management, enabling seamless interaction across services with thread-safe operations.
+
+#### Components Overview
+- **FrameworkController**: Coordinates initialization, configuration, and operation of database, network, and GUI components. It provides methods for CRUD operations, network communication, and GUI server management.
+- **Distributor**: Used internally by the FrameworkController to load and manage configurations from CSV files for all services.
+- **UniversalDatabaseConnector** and **DatabaseOperations**: Handle database connectivity and operations.
+- **Crypto**, **NetworkSocketConnector**, and **SecureDataTransmitter**: Manage encrypted network communication.
+- **GUIServer**: Manages the web-based interface.
+
+#### Features
+- **Unified Interface**: Simplifies interaction with database, network, and GUI services through a single class.
+- **Configuration Management**: Loads configurations from `configs.csv` and `gui_action_configs.txt` via `Distributor`.
+- **Thread-Safe Operations**: Uses thread locks to ensure safe concurrent access to components.
+- **Modular Integration**: Seamlessly integrates with existing Sane Data Commander components.
+- **Comprehensive Logging**: Detailed logs for debugging and monitoring all operations.
+- **Scalable Architecture**: Supports both client and server network roles and multiple database dialects.
+
+#### Installation
+
+1. Ensure the Sane Data Commander repository is cloned and dependencies are installed (see UDC Installation).
+2. Install all required dependencies for the Framework Controller, which includes dependencies for database, network, and GUI components:
+   ```text
+   mysql-connector-python>=8.0.0
+   psycopg2-binary>=2.9.0
+   pymysql>=1.0.2
+   cryptography>=3.4.8
+   pycryptodome>=3.10.1
+   flask>=2.0.0
+   gunicorn>=20.1.0
+   ```
+
+3. Ensure the `assets/html_templates` directory contains `default_template.html` and `default_template.css`.
+
+#### Usage
+
+The Framework Controller is configured via `configs.csv` for database, network, and GUI services. The `Test_FWC.py` script demonstrates its usage for initializing components, performing database operations, starting a network server, sending encrypted data, and launching the GUI.
+
+1. Create a configuration CSV file (`configs.csv`):
+   ```csv
+   service_type,service_name,version,settings   settings
+   database,test_db,1.0,"{""driver"": ""sqlite3"", ""db_path"": ""test.db""}"
+   gui,web_interface,1.0,"{""host"": ""localhost"", ""port"": 8000, ""template"": ""default_template.html"", ""actions"": {""button1"": ""click"", ""textbox1"": ""uppercase""}}"
+   network,server,1.0,"{""role"": ""server"", ""host"": ""localhost"", ""port"": 5000, ""crypto"": {""type"": ""xor"", ""params"": {""byte"": 42}}}"
+   network,client,1.0,"{""role"": ""client"", ""host"": ""localhost"", ""port"": 5000, ""crypto"": {""type"": ""xor"", ""params"": {""byte"": 42}}}"
+   ```
+
+2. Run the test script:
+   ```bash
+   python Test_FWC.py
+   ```
+
+   This will:
+   - Load configurations for all services.
+   - Initialize database, network, and GUI components.
+   - Create a `users` table and perform CRUD operations.
+   - Start a network server and send encrypted data.
+   - Launch the GUI server at `http://localhost:8000`.
+
+Example code snippet from `Test_FWC.py`:
+```python
+from FrameworkController import FrameworkController
+
+# Initialize the controller
+controller = FrameworkController()
+
+# Load configurations
+controller.load_configs()
+
+# Initialize database
+controller.initialize_database()
+
+# Create a table
+columns = {"id": "INTEGER PRIMARY KEY AUTOINCREMENT", "name": "TEXT"}
+controller.create_table("users", columns, primary_key="id")
+
+# Insert data
+controller.insert_data("users", {"name": "Alice"})
+
+# Select data
+result = controller.select_data("users", columns=["id", "name"], where={"name": "Alice"})
+
+# Initialize network
+controller.initialize_network()
+
+# Start network server
+controller.start_network_server()
+
+# Send network data
+response = controller.send_network_data(b"Hello, Server!")
+
+# Initialize GUI
+controller.initialize_gui()
+
+# Start GUI server
+controller.start_gui_server()
+```
+
+#### Testing
+
+To verify the Framework Controller functionality:
+1. Run `python Test_FWC.py` to execute the full workflow (database operations, network communication, GUI server).
+2. Access `http://localhost:8000` to interact with the GUI, clicking the button to see "Button button1 clicked" or typing in the text box to convert input to uppercase.
+3. Monitor logs to verify network and database operations.
+
+Ensure `configs.csv` and `gui_action_configs.txt` are present and dependencies are installed.
+
+#### Dependencies
+- Python >= 3.8
+- `mysql-connector-python>=8.0.0`
+- `psycopg2-binary>=2.9.0`
+- `pymysql>=1.0.2`
+- `cryptography>=3.4.8`
+- `pycryptodome>=3.10.1`
+- `flask>=2.0.0`
+- `gunicorn>=20.1.0`
+
+#### Project Structure (Framework Controller)
+```
+SaneDataCommander/
+├── FrameworkController.py     # High-level controller for all components
+├── Test_FWC.py               # Test script for FrameworkController
+├── configs.csv               # Configuration for all services
+├── gui_action_configs.txt    # GUI action configurations
+└── ...
+```
+
 ## API Documentation
 
 <small>
@@ -321,7 +455,7 @@ Manages configuration storage and retrieval using SQLite and CSV files.
   - **Returns**: None
   - **Description**: Initializes an SQLite database with a `configurations` table if it doesn’t exist. Logs initialization status.
   - **Example**:
-    ```python
+    ```pytest
     distributor = Distributor("configs.db")
     ```
 
@@ -336,7 +470,7 @@ Manages configuration storage and retrieval using SQLite and CSV files.
     ```
     ```csv
     service_type,service_name,version,settings
-    database,test_db,1.0,"{\"driver\": \"sqlite3\", \"db_path\": \"test.db\"}"
+    database,test_db,1.0,"{""driver"": ""sqlite3"", ""db_path"": ""test.db""}"
     ```
 
 - **storeConfigsInSQLite() -> bool**
@@ -358,7 +492,7 @@ Manages configuration storage and retrieval using SQLite and CSV files.
   - **Example**:
     ```python
     config = distributor.GetConfigureation("database", "test_db", "1.0")
-    # Returns: "{\"service_type\": \"database\", \"service_name\": \"test_db\", \"version\": \"1.0\", \"settings\": {\"driver\": \"sqlite3\", \"db_path\": \"test.db\"}}"
+    # Returns: "{""service_type"": ""database"", ""service_name"": ""test_db"", ""version"": ""1.0"", ""settings"": {""driver"": ""sqlite3"", ""db_path"": ""test.db""}}"
     ```
 
 - **addConfiguration(config: Dict[str, Any]) -> bool**
@@ -691,7 +825,6 @@ Provides high-level database operations (CRUD) using `SQLMaker`.
   - **Parameters**:
     - `table_name: str` - Name of the table to update.
     - `data: Dict[str, Any]` - Dictionary of column names to new values
-
   - **Returns**: `bool` - `True` if update succeeds, `False` otherwise.
   - **Description**: Updates rows matching the `where` conditions.
   - **Example**:
@@ -760,75 +893,84 @@ Handles message cryptography with configurable encryption plugins.
 Establishes unencrypted TCP socket connections.
 
 - **__init__(distributor: Distributor, service_name: str, version: str = "1.0") -> None**
-  EGF (Truncated text): - **Returns**: `Tr returns a connected TCP socket (server returns a client socket after accepting a customer).
-    - **Returns": "Returns a connected TCP socket (server returns a client socket after accepting a connection).
-    - **Description": "Creates a TCP socket based on the configuration (server or client) and returns the connected socket.
-    - **Example": "connect = NetworkSocketConnector(dist8, "server", "1.0").connect()"
+  - **Parameters**:
+    - `distributor: Distributor` - Instance of the `Distributor` class.
+    - `service_name: str` - Name of the network service (e.g., `"server"`, `"client"`).
+    - `version: str` - Configuration version.
+  - **Returns**: None
+  - **Description**: Initializes with configuration for establishing TCP connections.
+  - **Example**:
+    ```python
+    connector = NetworkSocketConnector(distributor, "server", "1.0")
+    ```
 
-    - **Description": "Returns a connected socket based on the configuration (server or receives data). The function returns the decrypted response (for clients).
-    - **Example": "socket = connector.connect()"
-    - Returns: The connected socket.
-    - Description: Establesthe connection to the server or accepts a client connection.
-    - Example:
-      ```python
-      connector = NetworkSocketConnector(dist, "server", "1.0")
-      socket = connector.connect()
-      """
-    - **send_stream(self, sock: socket.socket, data: bytes, client_addr: tuple) -> bool**
-      - Parameters:
-        - sock: Connected socket to send data over.
-        - data: Data to send.
-        - client_addr: Tuple of (host, port) for the client.
-      - Returns: True if sent successfully, False otherwise.
-      - Description: Sends data stream with security checks.
-      - Example:
-        ```python
-        connector.send_stream(socket, b"Hello", ("localhost", 5000))
-        """
-    - **receive_stream(self, sock: socket.socket, client_id: str, buffer_size: int = 1024) -> Optional[bytes]**
-      - Parameters:
-        - sock: Connected socket to receive data from.
-        - client_id: Client identifier for logging.
-        - buffer_size: Maximum bytes to receive at once (default: 1024).
-      - Returns: Received data or None if invalid or blocked.
-      - Description: Receives data stream with security checks.
-      - Example:
-        ```python
-        data = connector.receive_stream(socket, "client1")
-        """
+- **connect() -> socket.socket**
+  - **Parameters**: None
+  - **Returns**: `socket.socket` - A connected TCP socket (server returns client socket after accept).
+  - **Description**: Establishes a TCP connection based on configuration (server or client).
+  - **Example**:
+    ```python
+    socket = connector.connect()
+    ```
+
+- **receive_stream(sock: socket.socket, client_addr: tuple, buffer_size: int = 1024) -> Optional[bytes]**
+  - **Parameters**:
+    - `sock: socket.socket` - Connected socket to receive data from.
+    - `client_addr: tuple` - Tuple of (host, port) for the client.
+    - `buffer_size: int` - Maximum bytes to receive at once (default: 1024).
+  - **Returns**: `Optional[bytes]` - Received data, or `None` if invalid or blocked.
+  - **Description**: Receives data with security checks.
+  - **Example**:
+    ```python
+    data = connector.receive_stream(socket, ("localhost", 5000))
+    ```
+
+- **send_stream(sock: socket.socket, data: bytes, client_addr: tuple) -> bool**
+  - **Parameters**:
+    - `sock: socket.socket` - Connected socket to send data over.
+    - `data: bytes` - Data to send.
+    - `client_addr: tuple` - Tuple of (host, port) for the client.
+  - **Returns**: `bool` - `True` if sent successfully, `False` otherwise.
+  - **Description**: Sends data with security checks.
+  - **Example**:
+    ```python
+    connector.send_stream(socket, b"Hello", ("localhost", 5000))
+    ```
 
 #### Class: `SecureDataTransmitter`
 Manages encrypted data transmission over sockets.
 
 - **__init__(connector: NetworkSocketConnector, crypto: Crypto) -> None**
-  - Parameters:
-    - connector: NetworkSocketConnector instance.
-    - crypto: Crypto instance for encryption/decryption.
-  - Returns: None
-  - Description: Initializes with references to connector and crypto instances.
-  - Example:
+  - **Parameters**:
+    - `connector: NetworkSocketConnector` - Instance for socket creation.
+    - `crypto: Crypto` - Instance for encryption/decryption.
+  - **Returns**: None
+  - **Description**: Initializes with references to connector and crypto instances.
+  - **Example**:
     ```python
     transmitter = SecureDataTransmitter(connector, crypto)
-    """
-    - **send_data(self, socket: socket.socket, data: bytes) -> bytes**
-      - Parameters:
-        - socket: Connected socket to send data over.
-        - data: Data to encrypt and send.
-      - Returns: Decrypted response from the peer (empty for servers).
-      - Description: Encrypts data, sends it, and returns decrypted response.
-      - Example:
-        ```python
-        response = transmitter.send_data(socket, b"Hello")
-        """
-    - **start_server(self, socket: socket.socket) -> None**
-      - Parameters:
-        - socket: Server socket to accept connections.
-      - Returns: None
-    - Description: Listens for client connections, receives encrypted data, decrypts, processes, and sends encrypted response.
-    - Example:
-      ```python
-      transmitter.start_server(socket)
-      """
+    ```
+
+- **send_data(socket: socket.socket, data: bytes) -> bytes**
+  - **Parameters**:
+    - `socket: socket.socket` - Connected socket to send data over.
+    - `data: bytes` - Data to encrypt and send.
+  - **Returns**: `bytes` - Decrypted response from the peer (empty for servers).
+  - **Description**: Encrypts data, sends it, and returns decrypted response.
+  - **Example**:
+    ```python
+    response = transmitter.send_data(socket, b"Hello")
+    ```
+
+- **start_server(socket: socket.socket) -> None**
+  - **Parameters**:
+    - `socket: socket.socket` - Server socket to accept connections.
+  - **Returns**: None
+  - **Description**: Runs a server to receive and respond to encrypted client data.
+  - **Example**:
+    ```python
+    transmitter.start_server(socket)
+    ```
 
 ### GUI Server
 
@@ -836,22 +978,22 @@ Manages encrypted data transmission over sockets.
 Manages the Flask-based GUI server.
 
 - **__init__(distributor: Distributor, service_name: str, version: str) -> None**
-  - Parameters:
-    - distributor: Distributor instance for configuration management.
-    - service_name: Name of the GUI service (e.g., "web_interface").
-    - version: Configuration version (e.g., "1.0").
-  - Returns: None
-  - Description: Initializes the Flask app, template processor, action processor, and loads configurations.
-  - Example:
+  - **Parameters**:
+    - `distributor: Distributor` - Instance for configuration management.
+    - `service_name: str` - Name of the GUI service (e.g., `"web_interface"`).
+    - `version: str` - Configuration version (e.g., `"1.0"`).
+  - **Returns**: None
+  - **Description**: Initializes the Flask app, template processor, action processor, and loads configurations.
+  - **Example**:
     ```python
     gui_server = GUIServer(distributor, "web_interface", "1.0")
     ```
 
 - **start_server() -> None**
-  - Parameters: None
-  - Returns: None
-  - Description: Starts the Gunicorn server with configured host and port.
-  - Example:
+  - **Parameters**: None
+  - **Returns**: None
+  - **Description**: Starts the Gunicorn server with configured host and port.
+  - **Example**:
     ```python
     gui_server.start_server()
     ```
@@ -860,59 +1002,59 @@ Manages the Flask-based GUI server.
 Handles HTML template loading and processing.
 
 - **__init__(template_dir: str) -> None**
-  - Parameters:
-    - template_dir: Directory containing HTML templates and CSS.
-  - Returns: None
-  - Description: Initializes with the template directory.
-  - Example:
+  - **Parameters**:
+    - `template_dir: str` - Directory containing HTML templates and CSS.
+  - **Returns**: None
+  - **Description**: Initializes with the template directory.
+  - **Example**:
     ```python
     processor = TemplateProcessor("./assets/html_templates")
     ```
 
 - **load_template(template_name: str, cache: Dict[str, str], cache_lock: threading.Lock) -> str**
-  - Parameters:
-    - template_name: Name of the template file.
-    - cache: Dictionary for caching templates.
-    - cache_lock: Thread lock for cache access.
-  - Returns: Template content as a string.
-  - Description: Loads a template from cache or disk in a thread-safe manner.
-  - Example:
+  - **Parameters**:
+    - `template_name: str` - Name of the template file.
+    - `cache: Dict[str, str]` - Dictionary for caching templates.
+    - `cache_lock: threading.Lock` - Thread lock for cache access.
+  - **Returns**: `str` - Template content as a string.
+  - **Description**: Loads a template from cache or disk in a thread-safe manner.
+  - **Example**:
     ```python
     template = processor.load_template("default_template.html", cache, cache_lock)
     ```
 
 - **process_template(template_name: str, variables: Dict[str, str], functions: Dict[str, Callable], cache: Dict[str, str], cache_lock: threading.Lock) -> str**
-  - Parameters:
-    - template_name: Name of the template file.
-    - variables: Dictionary of variable names to values.
-    - functions: Dictionary of function names to callables.
-    - cache: Dictionary for caching templates.
-    - cache_lock: Thread lock for cache access.
-  - Returns: Processed template content.
-  - Description: Replaces tags in the template with variable or function values.
-  - Example:
+  - **Parameters**:
+    - `template_name: str` - Name of the template file.
+    - `variables: Dict[str, str]` - Dictionary of variable names to values.
+    - `functions: Dict[str, Callable]` - Dictionary of function names to callables.
+    - `cache: Dict[str, str]` - Dictionary for caching templates.
+    - `cache_lock: threading.Lock` - Thread lock for cache access.
+  - **Returns**: `str` - Processed template content.
+  - **Description**: Replaces tags in the template with variable or function values.
+  - **Example**:
     ```python
     html = processor.process_template("default_template.html", {"app_name": "SaneDataCommander"}, {}, cache, cache_lock)
     ```
 
 - **process_tag(tag: str, variables: Dict[str, str], functions: Dict[str, Callable]) -> str**
-  - Parameters:
-    - tag: Tag name to process.
-    - variables: Dictionary of variable names to values.
-    - functions: Dictionary of function names to callables.
-  - Returns: Resolved tag value.
-  - Description: Resolves a single tag to its corresponding value or function result.
-  - Example:
+  - **Parameters**:
+    - `tag: str` - Tag name to process.
+    - `variables: Dict[str, str]` - Dictionary of variable names to values.
+    - `functions: Dict[str, Callable]` - Dictionary of function names to callables.
+  - **Returns**: `str` - Resolved tag value.
+  - **Description**: Resolves a single tag to its corresponding value or function result.
+  - **Example**:
     ```python
     value = processor.process_tag("app_name", {"app_name": "SaneDataCommander"}, {})
     ```
 
 - **validate_template(template_content: str) -> bool**
-  - Parameters:
-    - template_content: HTML template content to validate.
-  - Returns: True if the template is valid HTML, False otherwise.
-  - Description: Validates that the template is well-formed HTML.
-  - Example:
+  - **Parameters**:
+    - `template_content: str` - HTML template content to validate.
+  - **Returns**: `bool` - `True` if the template is valid HTML, `False` otherwise.
+  - **Description**: Validates that the template is well-formed HTML.
+  - **Example**:
     ```python
     is_valid = processor.validate_template("<html><body>Hello</body></html>")
     ```
@@ -921,36 +1063,184 @@ Handles HTML template loading and processing.
 Handles UI actions based on configurations.
 
 - **__init__(distributor: Distributor, service_name: str, version: str) -> None**
-  - Parameters:
-    - distributor: Distributor instance for configuration management.
-    - service_name: Name of the GUI service.
-    - version: Configuration version.
-  - Returns: None
-  - Description: Initializes with action configurations from `gui_action_configs.txt` and `configs.csv`.
-  - Example:
+  - **Parameters**:
+    - `distributor: Distributor` - Instance for configuration management.
+    - `service_name: str` - Name of the GUI service.
+    - `version: str` - Configuration version.
+  - **Returns**: None
+  - **Description**: Initializes with action configurations from `gui_action_configs.txt` and `configs.csv`.
+  - **Example**:
     ```python
     processor = ActionProcessor(distributor, "web_interface", "1.0")
     ```
 
 - **load_actions() -> None**
-  - Parameters: None
-  - Returns: None
-  - Description: Loads action configurations from files and maps UI IDs to actions.
-  - Example:
+  - **Parameters**: None
+  - **Returns**: None
+  - **Description**: Loads action configurations from files and maps UI IDs to actions.
+  - **Example**:
     ```python
     processor.load_actions()
     ```
 
 - **process_action(action_id: str, input_data: Optional[str] = None) -> List[str]**
-  - Parameters:
-    - action_id: ID of the action to process.
-    - input_data: Optional input data for the action.
-  - Returns: List containing the result type and value (e.g., ["string", "HELLO"]).
-  - Description: Processes an action (transform or event) and returns the result.
-  - Example:
+  - **Parameters**:
+    - `action_id: str` - ID of the action to process.
+    - `input_data: Optional[str]` - Optional input data for the action.
+  - **Returns**: `List[str]` - List containing the result type and value (e.g., `["string", "HELLO"]`).
+  - **Description**: Processes an action (transform or event) and returns the result.
+  - **Example**:
     ```python
     result = processor.process_action("uppercase", "hello")
     # Returns: ["string", "HELLO"]
+    ```
+
+### Framework Controller
+
+#### Class: `FrameworkController`
+Orchestrates database, network, and GUI operations.
+
+- **__init__() -> None**
+  - **Parameters**: None
+  - **Returns**: None
+  - **Description**: Initializes with configuration paths for database, network, and GUI services.
+  - **Example**:
+    ```python
+    controller = FrameworkController()
+    ```
+
+- **load_configs() -> bool**
+  - **Parameters**: None
+  - **Returns**: `bool` - `True` if configurations are loaded successfully, `False` otherwise.
+  - **Description**: Loads configurations from `configs.csv` for all services.
+  - **Example**:
+    ```python
+    controller.load_configs()
+    ```
+
+- **initialize_database() -> bool**
+  - **Parameters**: None
+  - **Returns**: `bool` - `True` if database initialization succeeds, `False` otherwise.
+  - **Description**: Initializes database components for the `test_db` service.
+  - **Example**:
+    ```python
+    controller.initialize_database()
+    ```
+
+- **initialize_network() -> bool**
+  - **Parameters**: None
+  - **Returns**: `bool` - `True` if network initialization succeeds, `False` otherwise.
+  - **Description**: Initializes network components for `server` and `client` services.
+  - **Example**:
+    ```python
+    controller.initialize_network()
+    ```
+
+- **initialize_gui() -> bool**
+  - **Parameters**: None
+  - **Returns**: `bool` - `True` if GUI initialization succeeds, `False` otherwise.
+  - **Description**: Initializes GUI components for the `web_interface` service.
+  - **Example**:
+    ```python
+    controller.initialize_gui()
+    ```
+
+- **create_table(table_name: str, columns: Dict[str, str], primary_key: Optional[Union[str, List[str]]] = None, if_not_exists: bool = True) -> bool**
+  - **Parameters**:
+    - `table_name: str` - Name of the table to create.
+    - `columns: Dict[str, str]` - Dictionary of column names to SQL data types.
+    - `primary_key: Optional[Union[str, List[str]]]` - Column(s) for the primary key.
+    - `if_not_exists: bool` - Add `IF NOT EXISTS` clause.
+  - **Returns**: `bool` - `True` if table creation succeeds, `False` otherwise.
+  - **Description**: Creates a database table.
+  - **Example**:
+    ```python
+    controller.create_table("users", {"id": "INTEGER", "name": "TEXT"}, primary_key="id")
+    ```
+
+- **insert_data(table_name: str, data: Union[Dict[str, Any], List[Dict[str, Any]]]) -> bool**
+  - **Parameters**:
+    - `table_name: str` - Name of the table to insert into.
+    - `data: Union[Dict[str, Any], List[Dict[str, Any]]]` - Single dictionary or list of dictionaries with column names to values.
+  - **Returns**: `bool` - `True` if insertion succeeds, `False` otherwise.
+  - **Description**: Inserts single or multiple rows into a table.
+  - **Example**:
+    ```python
+    controller.insert_data("users", {"name": "Alice"})
+    ```
+
+- **select_data(table_name: str, columns: Union[str, List[str]] = "*", where: Optional[Dict[str, Any]] = None, order_by: Optional[Union[str, List[str]]] = None, limit: Optional[int] = None) -> Optional[List[Dict[str, Any]]]**
+  - **Parameters**:
+    - `table_name: str` - Name of the table to select from.
+    - `columns: Union[str, List[str]]` - Columns to select.
+    - `where: Optional[Dict[str, Any]]` - Conditions for the `WHERE` clause.
+    - `order_by: Optional[Union[str, List[str]]]` - Columns to order by.
+    - `limit: Optional[int]` - Maximum rows to return.
+  - **Returns**: `Optional[List[Dict[str, Any]]]` - List of dictionaries with results, or `None` on error.
+  - **Description**: Selects rows from a table.
+  - **Example**:
+    ```python
+    result = controller.select_data("users", columns=["id", "name"], where={"name": "Alice"})
+    ```
+
+- **update_data(table_name: str, data: Dict[str, Any], where: Optional[Dict[str, Any]] = None) -> bool**
+  - **Parameters**:
+    - `table_name: str` - Name of the table to update.
+    - `data: Dict[str, Any]` - Dictionary of column names to new values.
+    - `where: Optional[Dict[str, Any]]` - Conditions for the `WHERE` clause.
+  - **Returns**: `bool` - `True` if update succeeds, `False` otherwise.
+  - **Description**: Updates rows in a table.
+  - **Example**:
+    ```python
+    controller.update_data("users", {"name": "Bob"}, {"id": 1})
+    ```
+
+- **delete_data(table_name: str, where: Optional[Dict[str, Any]] = None) -> bool**
+  - **Parameters**:
+    - `table_name: str` - Name of the table to delete from.
+    - `where: Optional[Dict[str, Any]]` - Conditions for the `WHERE` clause.
+  - **Returns**: `bool` - `True` if deletion succeeds, `False` otherwise.
+  - **Description**: Deletes rows from a table.
+  - **Example**:
+    ```python
+    controller.delete_data("users", {"name": "Alice"})
+    ```
+
+- **start_network_server() -> bool**
+  - **Parameters**: None
+  - **Returns**: `bool` - `True` if the server starts successfully, `False` otherwise.
+  - **Description**: Starts the network server for the `server` service.
+  - **Example**:
+    ```python
+    controller.start_network_server()
+    ```
+
+- **send_network_data(data: bytes) -> Optional[bytes]**
+  - **Parameters**:
+    - `data: bytes` - Data to send.
+  - **Returns**: `Optional[bytes]` - Decrypted response from the server, or `None` on error.
+  - **Description**: Sends encrypted data using the `client` service.
+  - **Example**:
+    ```python
+    response = controller.send_network_data(b"Hello, Server!")
+    ```
+
+- **start_gui_server() -> bool**
+  - **Parameters**: None
+  - **Returns**: `bool` - `True` if the GUI server starts successfully, `False` otherwise.
+  - **Description**: Starts the GUI server for the `web_interface` service.
+  - **Example**:
+    ```python
+    controller.start_gui_server()
+    ```
+
+- **shutdown() -> None**
+  - **Parameters**: None
+  - **Returns**: None
+  - **Description**: Shuts down all components and closes connections.
+  - **Example**:
+    ```python
+    controller.shutdown()
     ```
 
 </small>

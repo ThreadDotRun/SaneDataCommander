@@ -1,5 +1,5 @@
 service_type,service_name,version,settings
-database,test_db,1.0,{"driver": "sqlite3", "db_path": "test.db"}
-network,server,1.0,{"role": "server", "host": "localhost", "port": 5000, "crypto": {"type": "xor", "params": {"byte": 42}}}
-network,client,1.0,{"role": "client", "host": "localhost", "port": 5000, "crypto": {"type": "xor", "params": {"byte": 42}}}
-gui,web_interface,1.0,{"host": "localhost", "port": 8000, "template": "default_template.html", "actions": {"button1": "click", "textbox1": "uppercase"}}
+database,test_db,1.0,"{""driver"": ""sqlite3"", ""db_path"": ""test.db""}"
+gui,web_interface,1.0,"{""host"": ""localhost"", ""port"": 8000, ""template"": ""default_template.html"", ""actions"": {""button1"": ""click"", ""textbox1"": ""uppercase""}}"
+network,server,1.0,"{""role"": ""server"", ""host"": ""localhost"", ""port"": 5000, ""crypto"": {""type"": ""xor"", ""params"": {""byte"": 42}}}"
+network,client,1.0,"{""role"": ""client"", ""host"": ""localhost"", ""port"": 5000, ""crypto"": {""type"": ""xor"", ""params"": {""byte"": 42}}}"
