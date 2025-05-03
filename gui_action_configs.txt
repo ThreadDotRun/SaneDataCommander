@@ -1,0 +1,4 @@
+action_id,type,logic
+uppercase,transform,{"function": "upper"}
+reverse,transform,{"function": "reverse"}
+click,event,{"response": "Button {action_id} clicked"}
