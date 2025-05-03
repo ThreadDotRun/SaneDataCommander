@@ -1,8 +1,8 @@
 from UniversalDatabaseConnector import UniversalDatabaseConnector
-
+from DatabaseOperations import DatabaseOperations
 # Assuming the configurations are loaded from a CSV file as in the previous response
 connector = UniversalDatabaseConnector()
-connector.load_configs("databases.csv")  # Load your database configurations
+connector.load_configs("configs.csv")  # Load your database configurations
 
 # Create a DatabaseOperations instance for SQLite (or any other database)
 db_ops = DatabaseOperations(connector, service_name="test_db_sqlite", version="1.0")

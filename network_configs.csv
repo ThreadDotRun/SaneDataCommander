@@ -1,0 +1,3 @@
+service_type,service_name,version,settings
+network,server,1.0,"{""role"": ""server"", ""host"": ""localhost"", ""port"": 5000, ""crypto"": {""type"": ""xor"", ""params"": {""byte"": 42}}}"
+network,client,1.0,"{""role"": ""client"", ""host"": ""localhost"", ""port"": 5000, ""crypto"": {""type"": ""xor"", ""params"": {""byte"": 42}}}"
