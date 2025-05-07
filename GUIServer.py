@@ -22,10 +22,10 @@ class GUIServer:
     def __init__(self, distributor: Distributor, service_name: str, version: str):
         #Initialize the GUI server with Distributor for configuration.
 
-        Args:
+        """Args:
             distributor: Distributor instance for configuration management.
             service_name: Name of the GUI service (e.g., 'web_interface').
-            version: Configuration version (e.g., '1.0').
+            version: Configuration version (e.g., '1.0')."""
         #
         self.distributor = distributor
         self.service_name = service_name
@@ -210,7 +210,7 @@ class GUIServer:
 
     def _generate_client_js(self) -> str:
         #Generate client-side JavaScript for handling button clicks, text inputs, and view loading.#
-        return #
+        return """
         async function handleButtonClick(id) {
             try {
                 const response = await fetch('/action/' + id, {
@@ -338,7 +338,7 @@ class GUIServer:
         function logout() {
             // Placeholder for logout functionality
             showNotification('Logged out successfully', 'success');
-        }
+        }"""
         #
 
     def start_server(self):
