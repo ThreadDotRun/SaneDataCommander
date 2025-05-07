@@ -1,13 +1,50 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-	<link rel="stylesheet" href="default_template.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% app_name %}</title>
+    <link rel="stylesheet" href="default_template.css">
 </head>
 <body>
-	<h1>Welcome to {% app_name %}</h1>
-	<button id="button1" onclick="handleButtonClick('button1')">Click Me</button>
-	<input type="text" id="textbox1" oninput="handleTextInput('textbox1')">
-	<div id="result"></div>
-	<script src="client.js"></script>
+    <!-- Header -->
+    <header class="header">
+        <h1>{% app_name %}</h1>
+        <nav class="header-nav">
+            <span>Welcome, User</span>
+            <a href="#" onclick="logout()">Logout</a>
+        </nav>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <ul>
+                <li><a href="#" onclick="loadView('dashboard')">Dashboard</a></li>
+                <li><a href="#" onclick="loadView('data_view')">Data View</a></li>
+                <li><a href="#" onclick="loadView('settings')">Settings</a></li>
+            </ul>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div id="content">
+                <!-- Default content, replaced by AJAX -->
+                <h2>Welcome to {% app_name %}</h2>
+                <p>Select an option from the sidebar to get started.</p>
+            </div>
+        </main>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>{% app_name %} v1.0.0 | <a href="mailto:support@sanedatacommander.com">Contact Support</a></p>
+    </footer>
+
+    <!-- Error/Success Notification Bar -->
+    <div id="notification" class="notification hidden"></div>
+
+    <script src="client.js"></script>
 </body>
 </html>

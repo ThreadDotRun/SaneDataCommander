@@ -2,3 +2,8 @@ action_id,type,logic
 uppercase,transform,{"function": "upper"}
 reverse,transform,{"function": "reverse"}
 click,event,{"response": "Button {action_id} clicked"}
+refresh_stats,event,{"response": "{""users"": 100, ""records"": 500}"}
+load_data,event,{"response": "[{""id"": 1, ""name"": ""Alice""}, {""id"": 2, ""name"": ""Bob""}]"}
+delete_row,event,{"response": "{""success"": true}"}
+save_settings,event,{"response": "{""success"": true}"}
+load_settings,event,{"response": "{""theme"": ""light"", ""notifications"": true}"}

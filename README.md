@@ -8,6 +8,36 @@ More features, dialects, and integrations are forthcoming in upcoming versions, 
 
 **TLDR**: Running `python Test_UDC.py`, `python Test_Network.py`, `python Test_UDO.py`, or `python Test_FWC.py` provides trivial usage examples for the database, network, and controller components. Run `python RunGUIServer.py` to launch the GUI web interface and show trivial configurations from the csv config files.
 
+
+                           //""\\\
+                          ((    (()
+                         () @ @  ))
+                         (( /   ())
+                         ))) =  (((
+                        ((()`''^(())
+                        )))()    \((
+                       (((()( *) *)))
+                        )/)()    /()
+                       (/ /)   .( (\
+                       / /)(`'''^\\ \
+                      / / /)      ''--.
+                    _/ /  \            `\--_
+                  _///^)---`-./        .'   \_
+                _/           /       .^       \_
+      _________/            /     _-^           \____________________________
+      _- ~~ - /            /    .'               \ =~~  - _ =  - _~_ =  -  - 
+        =~_ _/           _/  .-'                  \_  =_ -  ~~ - _ = ~  --  ~ 
+      ~ - _/         ,-'`    \                      \-~~ _  = ~_-   -- _~~  = 
+      = ~/         .^    |    \                      \_ ~  -   _  = ~ -  ~  _ 
+       -/         /     /\     \                       \=  ~ ~  = -   ~ _ -~~
+      -/gnv      /    .'  \     \                       \_~  = _ ~  = ~   ~ = 
+                '--''^     `.    \
+                             `'--`
+
+
+📢❗🚨Note: This is an MVP product in beta - You are responsible at this point (fork me please) for doing some regex on your SQL or using a lib and network coms (mostly flooding is the worry since its encrypted).
+
+
 ## Components
 
 ### Universal Database Connector (UDC)

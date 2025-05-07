@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="default_template.css">
+</head>
+<body>
+    <h2>Dashboard</h2>
+    <div class="dashboard-stats">
+        <div class="stat-card">
+            <h3>Users</h3>
+            <p id="user-count">Loading...</p>
+        </div>
+        <div class="stat-card">
+            <h3>Records</h3>
+            <p id="record-count">Loading...</p>
+        </div>
+    </div>
+    <button id="refresh-stats" onclick="handleButtonClick('refresh-stats')">Refresh Stats</button>
+    <div id="result" class="hidden"></div>
+</body>
+</html>
